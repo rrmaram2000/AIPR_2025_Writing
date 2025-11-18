@@ -1,0 +1,861 @@
+% This is samplepaper.tex, a sample chapter demonstrating the
+% LLNCS macro package for Springer Computer Science proceedings;
+% Version 2.21 of 2022/01/12
+%
+\documentclass[runningheads]{llncs}
+%
+\usepackage[T1]{fontenc}
+% T1 fonts will be used to generate the final print and online PDFs,
+% so please use T1 fonts in your manuscript whenever possible.
+% Other font encondings may result in incorrect characters.
+%
+\usepackage{graphicx}
+% Used for displaying a sample figure. If possible, figure files should
+% be included in EPS format.
+%
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% If you use the hyperref package, please uncomment the following two lines
+% to display URLs in blue roman font according to Springer's eBook style:
+%\usepackage{color}
+%\renewcommand\UrlFont{\color{blue}\rmfamily}
+%
+\begin{document}
+%
+\title{Wavelet Scattering Transform for Colorectal Cancer Histopathology Classification\thanks{This research was supported by an intramural NIH grant 889286 Clinical Center's Research Award for Staff Clinicians (E.L.).}}
+%
+%\titlerunning{Abbreviated paper title}
+% If the paper title is too long for the running head, you can set
+% an abbreviated paper title here
+%
+\author{Ritish Raghav Maram\inst{1,2}\orcidID{0000-0000-0000-0000} \and
+Elliot Levy\inst{2} \and
+Murray Loew\inst{1}}
+%
+\authorrunning{R. R. Maram et al.}
+% First names are abbreviated in the running head.
+% If there are more than two authors, 'et al.' is used.
+%
+\institute{The George Washington University, Biomedical Engineering, Washington DC, United States\\
+\email{ritish@gwu.edu, loew@gwu.edu}
+\and
+National Institutes of Health, Clinical Center, Bethesda MD, United States\\
+\email{elliot.levy@nih.gov}}
+%
+\maketitle              % typeset the header of the contribution
+%
+\begin{abstract}
+Accurate tissue classification in colorectal cancer (CRC) histopathology is essential for diagnosis, treatment stratification, and prognosis assessment. While deep learning approaches have shown promise, they require substantial training data and lack mathematical interpretability. We present a novel application of the wavelet scattering transform—a mathematically principled feature extraction method—for CRC tissue classification. The scattering transform provides translation-invariant, stable features through cascaded wavelet convolutions and modulus operations, sharing architectural similarities with convolutional neural networks but requiring no training. Using a two-layer scattering network with Morlet wavelets (3 scales, 4 orientations), we extract 61-dimensional feature vectors from 150×150 pixel histology patches across eight tissue types (tumor, stroma, lymphocytes, debris, mucosa, adipose, and empty). A support vector machine with cubic polynomial kernel achieves 85.0\% accuracy on held-out test data, with particularly strong performance on tumor (80.8\%) and empty tissue (96.8\%). Our results demonstrate that scattering features capture higher-order statistical moments beyond traditional texture descriptors, effectively discriminating tissue types with identical second-order statistics. This work represents the first application of wavelet scattering to cancer histopathology, offering a computationally efficient, interpretable alternative to deep learning for medical image analysis.
+
+\keywords{Wavelet scattering transform \and Colorectal cancer \and Histopathology \and Texture classification \and Medical image analysis \and Explainable AI}
+\end{abstract}
+%
+%
+%
+\section{Introduction}
+
+\subsection{Motivation and Clinical Context}
+
+Colorectal cancer (CRC) is the third most common cancer worldwide and a leading cause of cancer-related mortality~\cite{ref_crc_stats}. Accurate histological classification of tumor tissue is fundamental to cancer diagnosis, treatment planning, and prognosis. Beyond identifying malignancy, quantitative analysis of intratumoral heterogeneity, stromal composition, and immune cell infiltration has emerged as prognostically significant~\cite{Mezheyeuski2016,Zhou2019}. 
+
+Traditional pathology relies on expert visual assessment of hematoxylin and eosin (H\&E) stained tissue sections—a process that is subjective, time-intensive, and subject to inter-observer variability. Digital pathology and computational image analysis offer opportunities to quantify tissue characteristics objectively and reproducibly. However, extracting discriminative features from histology images remains challenging due to the complex, multi-scale nature of tissue architecture and the substantial biological variability within and across tissue types.
+
+\subsection{Related Work in Histopathology Image Analysis}
+
+Previous computational approaches to CRC tissue classification have employed various feature extraction strategies:
+
+\begin{itemize}
+    \item \textbf{Classical texture features}: First-order histogram statistics, local binary patterns (LBP), and co-occurrence matrices have been widely used~\cite{Kather2016}. While computationally efficient, these methods typically capture only low-order statistical moments and may not fully characterize complex tissue patterns.
+    
+    \item \textbf{Hand-crafted morphological features}: Studies have quantified tumor heterogeneity~\cite{Lubner2015,Alic2014}, stromal proportions~\cite{Mezheyeuski2016}, and immune infiltration patterns~\cite{Jin2022}. These approaches often require domain expertise to design features and may not generalize across datasets.
+    
+    \item \textbf{Deep learning}: Convolutional neural networks (CNNs) have achieved state-of-the-art performance on histopathology classification tasks~\cite{Kather2019,Korbar2017}. However, CNNs require large annotated datasets, substantial computational resources for training, and their learned representations lack mathematical interpretability.
+\end{itemize}
+
+A fundamental challenge in tissue classification is achieving invariance to irrelevant transformations (translations, rotations, small deformations) while retaining discriminative information. Texture patterns in histology images are inherently multi-scale and exhibit complex spatial dependencies that are not fully captured by second-order statistics.
+
+\subsection{The Wavelet Scattering Transform}
+
+The wavelet scattering transform, introduced by Mallat~\cite{Mallat2012}, addresses these challenges through a mathematically principled approach. The transform builds a hierarchical representation by cascading wavelet convolutions, complex modulus nonlinearities, and averaging operations:
+
+\begin{enumerate}
+    \item \textbf{Wavelet convolutions} extract multi-scale, multi-orientation features
+    \item \textbf{Complex modulus} provides local translation invariance and captures amplitude information
+    \item \textbf{Averaging with scaling function} aggregates information over spatial domains
+    \item \textbf{Cascading multiple layers} recovers high-frequency information lost to averaging
+\end{enumerate}
+
+Key mathematical properties of the scattering transform make it particularly suitable for texture analysis:
+
+\begin{itemize}
+    \item \textbf{Translation invariance}: Large-scale averaging provides global translation invariance
+    \item \textbf{Energy preservation}: The transform preserves the $L^2$ norm of the input signal
+    \item \textbf{Lipschitz continuity}: Provably stable to small deformations and diffeomorphisms~\cite{Mallat2012}
+    \item \textbf{Higher-order moments}: Second-order scattering coefficients capture up to fourth-order statistical moments, discriminating textures with identical power spectra~\cite{Bruna2013}
+\end{itemize}
+
+Importantly, the scattering transform shares architectural similarities with CNNs—both use convolutions, nonlinearities, and pooling—but with a crucial distinction: scattering networks use predefined wavelet filters rather than learned weights. This design provides computational efficiency (no training required), mathematical interpretability, and guaranteed stability properties.
+
+\subsection{Contributions}
+
+This work makes the following contributions:
+
+\begin{enumerate}
+    \item \textbf{First application to cancer histopathology}: To our knowledge, this is the first study applying wavelet scattering features to cancer tissue classification, demonstrating their effectiveness on a challenging multi-class histopathology dataset.
+    
+    \item \textbf{Methodological framework}: We develop a complete pipeline including stain normalization, two-layer scattering network architecture with optimized parameters (3 scales, 4 orientations), and SVM classification with cubic polynomial kernel.
+    
+    \item \textbf{Comprehensive evaluation}: We achieve 85.0\% accuracy on eight-class CRC tissue classification, with detailed per-class performance analysis revealing strengths and limitations of scattering features for different tissue types.
+    
+    \item \textbf{Interpretable features}: We demonstrate that scattering coefficients capture higher-order statistical dependencies, providing insight into why certain tissue types are more easily discriminated than others.
+    
+    \item \textbf{Efficient alternative to deep learning}: Our approach requires no training of feature extractors, significantly reducing computational requirements while maintaining competitive performance.
+\end{enumerate}
+
+\subsection{Paper Organization}
+
+The remainder of this paper is organized as follows: Section~\ref{sec:background} provides mathematical background on wavelet transforms and the construction of scattering coefficients. Section~\ref{sec:methods} describes our scattering network architecture, dataset, and classification methodology. Section~\ref{sec:results} presents experimental results including overall accuracy, per-class performance, and confusion matrix analysis. Section~\ref{sec:discussion} discusses the implications of our findings, limitations, and future directions. Section~\ref{sec:conclusion} concludes the paper.
+
+%
+%
+%
+\section{Mathematical Background}
+\label{sec:background}
+
+In this section, we develop the mathematical framework underlying the wavelet scattering transform. We begin with the continuous wavelet transform, introduce the modulus operator for translation invariance, and build up to the multi-layer scattering representation.
+
+\subsection{The 2D Continuous Wavelet Transform}
+
+Let $f(\mathbf{x}) \in L^2(\mathbb{R}^2)$ denote an input image, where $\mathbf{x} = (x,y)$ represents spatial coordinates. The 2D continuous wavelet transform decomposes $f$ into coefficients at multiple scales and orientations.
+
+\subsubsection{Scaling Function and Wavelets}
+
+A \textbf{scaling function} $\phi(\mathbf{x})$ acts as a 2D low-pass filter:
+\begin{equation}
+    (f * \phi)(\mathbf{x}) = \int_{\mathbb{R}^2} f(\mathbf{u}) \phi(\mathbf{x} - \mathbf{u}) d\mathbf{u}
+\end{equation}
+
+A family of \textbf{wavelets} at different scales and orientations acts as 2D band-pass filters. For a mother wavelet $\psi(\mathbf{x})$, we define:
+\begin{equation}
+    \psi_{\lambda,\theta}(\mathbf{x}) = \lambda^{-2} \psi(\lambda^{-1} R_{\theta}^{-1} \mathbf{x})
+    \label{eq:wavelet_scaled_rotated}
+\end{equation}
+where:
+\begin{itemize}
+    \item $\lambda = 2^j$ for $j \in \mathbb{Z}$ is the dyadic scale parameter
+    \item $\theta \in \{0, \pi/L, 2\pi/L, \ldots, (L-1)\pi/L\}$ is the orientation angle
+    \item $R_{\theta}$ is the rotation matrix: $R_{\theta} = \begin{pmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{pmatrix}$
+\end{itemize}
+
+\subsubsection{Morlet Wavelets}
+
+In this work, we use the complex Morlet (Gabor) wavelet family. A Morlet wavelet is defined as the product of a Gaussian envelope and a complex exponential:
+\begin{equation}
+    \psi(\mathbf{x}) = e^{i\boldsymbol{\xi} \cdot \mathbf{x}} \eta(\mathbf{x})
+    \label{eq:morlet_wavelet}
+\end{equation}
+where $\boldsymbol{\xi}$ is the central frequency vector and $\eta(\mathbf{x})$ is a Gaussian window:
+\begin{equation}
+    \eta(\mathbf{x}) = \frac{1}{2\pi\sigma^2} e^{-\|\mathbf{x}\|^2/(2\sigma^2)}
+\end{equation}
+
+Morlet wavelets are particularly well-suited for texture analysis because:
+\begin{itemize}
+    \item They provide optimal joint localization in space and frequency (Heisenberg uncertainty)
+    \item Their frequency response is well-localized in a band-pass region
+    \item They naturally capture oriented structures in images
+\end{itemize}
+
+In the Fourier domain, the wavelet $\hat{\psi}_{\lambda,\theta}(\boldsymbol{\omega})$ is centered at frequency $\boldsymbol{\omega} = \lambda^{-1} R_{\theta} \boldsymbol{\xi}$ with bandwidth proportional to $\lambda^{-1}$.
+
+\subsubsection{Wavelet Transform Definition}
+
+The 2D continuous wavelet transform of image $f$ is:
+\begin{equation}
+    Wf = \left\{ f * \phi, \; (f * \psi_{\lambda,\theta})_{\lambda,\theta} \right\}
+    \label{eq:wavelet_transform}
+\end{equation}
+
+The low-pass filter and series of band-pass filters collectively span the 2D frequency domain, ensuring energy preservation:
+\begin{equation}
+    \|f\|^2 = \|f * \phi\|^2 + \sum_{\lambda,\theta} \|f * \psi_{\lambda,\theta}\|^2
+\end{equation}
+
+\subsection{Building Translation Invariance: The Modulus Operator}
+
+\subsubsection{Limitations of Wavelet Coefficients}
+
+While the wavelet transform provides multi-scale analysis, wavelet coefficients $f * \psi_{\lambda,\theta}$ are \textit{sensitive to translations}. For a translated image $f_c(\mathbf{x}) = f(\mathbf{x} - \mathbf{c})$:
+\begin{equation}
+    (f_c * \psi_{\lambda,\theta})(\mathbf{x}) = (f * \psi_{\lambda,\theta})(\mathbf{x} - \mathbf{c}) \cdot e^{i\boldsymbol{\xi}_{\lambda,\theta} \cdot \mathbf{c}}
+\end{equation}
+
+The complex phase term $e^{i\boldsymbol{\xi}_{\lambda,\theta} \cdot \mathbf{c}}$ depends on the translation $\mathbf{c}$, making direct use of wavelet coefficients unsuitable for translation-invariant recognition.
+
+\subsubsection{Modulus for Phase Elimination}
+
+To achieve translation invariance, we eliminate the complex phase by taking the modulus (magnitude):
+\begin{equation}
+    U[\lambda,\theta]f = |f * \psi_{\lambda,\theta}|
+    \label{eq:modulus_operator}
+\end{equation}
+
+The modulus operation:
+\begin{itemize}
+    \item Removes phase variations that encode precise spatial positions
+    \item Preserves amplitude information about local frequency content
+    \item Creates a lower-frequency envelope through interference effects
+\end{itemize}
+
+For example, if $f(\mathbf{x}) = \cos(\boldsymbol{\omega}_1 \cdot \mathbf{x}) + a\cos(\boldsymbol{\omega}_2 \cdot \mathbf{x})$ and both $\boldsymbol{\omega}_1$ and $\boldsymbol{\omega}_2$ are in the passband of $\hat{\psi}_{\lambda,\theta}$, then:
+\begin{equation}
+    |f * \psi_{\lambda,\theta}| \propto \left| \hat{\psi}_{\lambda,\theta}(\boldsymbol{\omega}_1) + a \hat{\psi}_{\lambda,\theta}(\boldsymbol{\omega}_2) e^{i(\boldsymbol{\omega}_2 - \boldsymbol{\omega}_1) \cdot \mathbf{x}} \right|
+\end{equation}
+oscillates at the \textit{interference frequency} $\|\boldsymbol{\omega}_2 - \boldsymbol{\omega}_1\|$, which is lower than the original frequencies.
+
+\subsection{Scattering Coefficients: Hierarchical Feature Extraction}
+
+\subsubsection{Zeroth-Order Scattering}
+
+The zeroth-order scattering coefficients represent the low-frequency content:
+\begin{equation}
+    S^0f = f * \phi
+    \label{eq:s0}
+\end{equation}
+
+This is simply the coarse-scale smoothed version of the input image.
+
+\subsubsection{First-Order Scattering}
+
+After taking the modulus $U[\lambda_1,\theta_1]f$, we average with the scaling function to obtain first-order scattering coefficients:
+\begin{equation}
+    S^1f(\lambda_1, \theta_1) = \left|f * \psi_{\lambda_1,\theta_1}\right| * \phi
+    \label{eq:s1}
+\end{equation}
+
+These coefficients are translation-invariant (to the extent determined by the support of $\phi$) and capture the amplitude of frequency content at different scales and orientations.
+
+However, the averaging operation $* \phi$ removes high-frequency information present in $|f * \psi_{\lambda_1,\theta_1}|$. To recover this lost information, we proceed to the second layer.
+
+\subsubsection{Second-Order Scattering}
+
+We apply another wavelet transform to the first-layer modulus outputs:
+\begin{equation}
+    S^2f(\lambda_1, \theta_1, \lambda_2, \theta_2) = \left| \left|f * \psi_{\lambda_1,\theta_1}\right| * \psi_{\lambda_2,\theta_2} \right| * \phi
+    \label{eq:s2}
+\end{equation}
+
+Second-order coefficients:
+\begin{itemize}
+    \item Recover high frequencies lost in the first-layer averaging
+    \item Capture interactions between different frequency components
+    \item Encode up to fourth-order statistical moments~\cite{Bruna2013}
+\end{itemize}
+
+\subsubsection{General $m$-th Order Scattering}
+
+More generally, the $m$-th order scattering coefficients are:
+\begin{equation}
+    S^mf(\lambda_1, \theta_1, \ldots, \lambda_m, \theta_m) = \left| \cdots \left| \left|f * \psi_{\lambda_1,\theta_1}\right| * \psi_{\lambda_2,\theta_2} \right| \cdots * \psi_{\lambda_m,\theta_m} \right| * \phi
+    \label{eq:sm}
+\end{equation}
+
+We can compactly denote a sequence of scale-orientation pairs as a \textbf{path}:
+\begin{equation}
+    p = (\lambda_1, \theta_1, \lambda_2, \theta_2, \ldots, \lambda_m, \theta_m)
+\end{equation}
+
+Then the scattering coefficient along path $p$ is written as $S^mf(p)$.
+
+\subsubsection{Complete Scattering Transform}
+
+The complete scattering transform of image $f$ is the collection of all scattering coefficients up to some maximum order:
+\begin{equation}
+    Sf = \left\{ S^0f, \; S^1f(\lambda_1,\theta_1), \; S^2f(\lambda_1,\theta_1,\lambda_2,\theta_2), \; \ldots \right\}
+    \label{eq:scattering_transform}
+\end{equation}
+
+\subsection{Key Mathematical Properties}
+
+The scattering transform satisfies several important properties:
+
+\begin{enumerate}
+    \item \textbf{Energy preservation}~\cite{Mallat2012}:
+    \begin{equation}
+        \|f\|^2 = \sum_{m=0}^{\infty} \sum_{p \in P_m} \|S^mf(p)\|^2
+    \end{equation}
+    where $P_m$ is the set of all paths of length $m$.
+    
+    \item \textbf{Translation invariance}: For sufficiently large support of $\phi$,
+    \begin{equation}
+        S(f(\mathbf{x} - \mathbf{c})) \approx S(f(\mathbf{x}))
+    \end{equation}
+    
+    \item \textbf{Lipschitz continuity to deformations}~\cite{Mallat2012}: For a diffeomorphism $\tau$ with $\|\nabla \tau\| \leq \epsilon$,
+    \begin{equation}
+        \|S(f(\tau(\mathbf{x}))) - S(f(\mathbf{x}))\| \leq C\epsilon \|f\|
+    \end{equation}
+    where $C$ is a constant depending on the wavelets.
+    
+    \item \textbf{Exponential energy decay}~\cite{Waldspurger2017}: The energy in scattering coefficients decreases exponentially with path length:
+    \begin{equation}
+        \|S^{m+1}f\| \leq \beta \|S^mf\|
+    \end{equation}
+    for some $\beta < 1$. This justifies truncating the cascade after a few layers.
+\end{enumerate}
+
+\subsection{Texture Discrimination via Higher-Order Moments}
+
+A fundamental advantage of scattering features for texture classification is their ability to capture higher-order statistical moments.
+
+\subsubsection{Limitations of Second-Order Statistics}
+
+Many classical texture descriptors (e.g., power spectrum, autocorrelation) capture only second-order moments. Textures with identical second-order statistics but different higher-order statistics cannot be distinguished by these methods.
+
+For example, consider two images:
+\begin{itemize}
+    \item Image $f_1$: An actual tissue texture patch
+    \item Image $f_2$: A realization of a Gaussian random field with the same power spectrum as $f_1$
+\end{itemize}
+
+These images have identical power spectra (and thus identical second-order moments), yet they are visually distinct. The scattering transform can discriminate them.
+
+\subsubsection{Higher-Order Moment Capture}
+
+Bruna and Mallat~\cite{Bruna2013} proved that:
+\begin{itemize}
+    \item \textbf{First-order coefficients} $S^1f$ depend on moments up to order 2
+    \item \textbf{Second-order coefficients} $S^2f$ depend on moments up to order 4
+    \item \textbf{Higher-order coefficients} capture progressively higher moments
+\end{itemize}
+
+This property is crucial for discriminating complex textures in histopathology images, where tissue patterns exhibit rich higher-order statistical structure.
+
+%
+%
+%
+\section{Methods}
+\label{sec:methods}
+
+\subsection{Scattering Network Architecture}
+
+\subsubsection{Design Rationale}
+
+We implement a two-layer scattering network based on the following considerations:
+
+\begin{enumerate}
+    \item \textbf{Energy decay}: Scattering coefficients' energy decays exponentially with layer depth~\cite{Waldspurger2017}. Beyond the second layer, coefficients typically contain less than 1\% of the input energy~\cite{Bruna2013}.
+    
+    \item \textbf{Computational efficiency}: Each additional layer increases the feature dimension exponentially (by a factor of $J \times L$, where $J$ is the number of scales and $L$ is the number of orientations).
+    
+    \item \textbf{Empirical performance}: Two-layer scattering networks have demonstrated strong performance on texture classification tasks~\cite{Bruna2013,Sifre2014}.
+\end{enumerate}
+
+\subsubsection{Network Parameters}
+
+Through 5-fold cross-validation on the training set, we determined optimal parameters:
+
+\begin{itemize}
+    \item \textbf{Number of scales}: $J = 3$ (scales $2^0, 2^1, 2^2$)
+    \item \textbf{Number of orientations}: $L = 4$ (orientations $0, \pi/4, \pi/2, 3\pi/4$)
+    \item \textbf{Wavelet family}: Complex Morlet (Gabor) wavelets
+    \item \textbf{Number of layers}: 2 (yielding zeroth, first, and second-order coefficients)
+\end{itemize}
+
+The first and second filter banks contain the same wavelets (3 scales $\times$ 4 orientations = 12 wavelets each).
+
+\subsubsection{Feature Vector Construction}
+
+For an input image $f$ of size $150 \times 150$ pixels, the scattering network produces:
+
+\begin{itemize}
+    \item \textbf{Zeroth-order}: 1 coefficient (low-pass filtered image, averaged)
+    \item \textbf{First-order}: $J \times L = 3 \times 4 = 12$ coefficients
+    \item \textbf{Second-order}: $J \times L \times J \times L = 144$ possible paths
+\end{itemize}
+
+However, due to energy decay along paths, many second-order coefficients have negligible energy. Following standard practice~\cite{Bruna2013}, we retain only frequency-decreasing paths where $\lambda_2 \geq \lambda_1$, significantly reducing the feature dimension while preserving discriminative information.
+
+After spatial averaging and retention of meaningful paths, we obtain a feature vector of dimension $d = 61$ for each image:
+\begin{equation}
+    \mathbf{s} = [s_0, s_1^{(1)}, \ldots, s_1^{(12)}, s_2^{(1)}, \ldots, s_2^{(48)}]^T \in \mathbb{R}^{61}
+\end{equation}
+
+\subsection{Dataset}
+
+\subsubsection{Data Source}
+
+We use the publicly available colorectal cancer histology dataset from Kather et al.~\cite{Kather2016}. The dataset contains 5,000 H\&E stained tissue patches from CRC whole slide images, representing eight tissue types commonly encountered in colorectal cancer:
+
+\begin{enumerate}
+    \item \textbf{TUMOR} (TUM): Colorectal adenocarcinoma epithelium
+    \item \textbf{STROMA} (STR): Simple stroma (connective tissue)
+    \item \textbf{COMPLEX} (COM): Complex stroma (containing single tumor cells)
+    \item \textbf{LYMPHO} (LYM): Lymphocytes (immune cells)
+    \item \textbf{DEBRIS} (DEB): Debris and necrotic material
+    \item \textbf{MUCOSA} (MUC): Normal mucosal glands
+    \item \textbf{ADIPOSE} (ADI): Adipose (fat) tissue
+    \item \textbf{EMPTY} (EMP): Background (no tissue)
+\end{enumerate}
+
+Each tissue type is represented by 625 non-overlapping tissue patches of size $150 \times 150$ pixels (approximately $74 \times 74$ $\mu$m$^2$ at the original magnification).
+
+\subsubsection{Stain Normalization}
+
+Histopathology images exhibit significant color variation due to differences in staining protocols, scanner characteristics, and tissue preparation. To reduce this technical variability, we apply Macenko's method~\cite{Macenko2009} for stain normalization. This method:
+
+\begin{enumerate}
+    \item Separates H\&E stain concentrations using color deconvolution
+    \item Normalizes stain densities to a reference distribution
+    \item Reconstructs the normalized RGB image
+\end{enumerate}
+
+Stain normalization is performed as a preprocessing step before feature extraction.
+
+\subsubsection{Train-Test Split}
+
+The dataset is divided into:
+\begin{itemize}
+    \item \textbf{Training set}: 4,000 images (500 per class)
+    \item \textbf{Test set}: 1,000 images (125 per class)
+\end{itemize}
+
+This 80-20 split ensures each tissue type is equally represented in both training and test sets, enabling robust evaluation across all classes.
+
+\subsection{Classification}
+
+\subsubsection{Support Vector Machine}
+
+We employ a Support Vector Machine (SVM) with a cubic polynomial kernel for multi-class classification. SVMs are particularly well-suited for scattering features because:
+
+\begin{itemize}
+    \item Scattering features lie in a relatively low-dimensional space (61 dimensions)
+    \item SVMs provide strong generalization on moderate-sized datasets
+    \item Polynomial kernels can capture nonlinear relationships between features
+\end{itemize}
+
+\subsubsection{Kernel Function}
+
+The cubic polynomial kernel is defined as:
+\begin{equation}
+    K(\mathbf{s}_i, \mathbf{s}_j) = (\mathbf{s}_i^T \mathbf{s}_j + c)^3
+\end{equation}
+where $c$ is a constant (set to 1 in our implementation).
+
+\subsubsection{Multi-Class Strategy}
+
+For eight-class classification, we use a one-versus-all (OvA) approach:
+\begin{itemize}
+    \item Train $C = 8$ binary classifiers, one for each class
+    \item For each binary classifier, the target class is positive and all other classes are negative
+    \item At test time, assign the class with the highest decision function value
+\end{itemize}
+
+\subsubsection{Feature Standardization}
+
+Before training, we standardize the features:
+\begin{equation}
+    \tilde{s}_k = \frac{s_k - \mu_k}{\sigma_k}
+\end{equation}
+where $\mu_k$ and $\sigma_k$ are the mean and standard deviation of the $k$-th feature computed on the training set. The same standardization parameters are applied to the test set.
+
+\subsection{Implementation Details}
+
+\begin{itemize}
+    \item \textbf{Software}: MATLAB R2023b
+    \item \textbf{Toolboxes}: 
+    \begin{itemize}
+        \item Wavelet Toolbox 23.2 for scattering transform computation
+        \item Statistics and Machine Learning Toolbox 23.2 for SVM training and evaluation
+    \end{itemize}
+    \item \textbf{Computational resources}: Standard desktop workstation (Intel Core i7, 16 GB RAM)
+    \item \textbf{Processing time}: 
+    \begin{itemize}
+        \item Feature extraction: $\sim$0.5 seconds per image
+        \item SVM training: $\sim$2 minutes for 4,000 samples
+        \item Test inference: $\sim$0.01 seconds per image
+    \end{itemize}
+\end{itemize}
+
+\subsection{Evaluation Metrics}
+
+We report the following metrics:
+
+\begin{enumerate}
+    \item \textbf{Overall accuracy}: Fraction of correctly classified samples
+    \begin{equation}
+        \text{Accuracy} = \frac{1}{N_{\text{test}}} \sum_{i=1}^{N_{\text{test}}} \mathbb{I}(\hat{y}_i = y_i)
+    \end{equation}
+    
+    \item \textbf{Per-class accuracy}: Accuracy for each tissue type
+    \begin{equation}
+        \text{Accuracy}_c = \frac{\text{True Positives}_c}{N_c}
+    \end{equation}
+    where $N_c = 125$ is the number of test samples for class $c$.
+    
+    \item \textbf{Confusion matrix}: $8 \times 8$ matrix showing true classes vs. predicted classes
+    
+    \item \textbf{Cross-validation performance}: 5-fold cross-validation accuracy on the training set for hyperparameter selection
+\end{enumerate}
+
+%
+%
+%
+\section{Results}
+\label{sec:results}
+
+\subsection{Overall Performance}
+
+The scattering-based SVM classifier achieved the following results:
+
+\begin{itemize}
+    \item \textbf{Training set (5-fold cross-validation)}: Mean accuracy of 84.47\% (std: 0.8\%)
+    \item \textbf{Test set}: Accuracy of 85.0\%
+\end{itemize}
+
+The close agreement between cross-validation and test accuracies indicates good generalization without overfitting.
+
+\subsection{Per-Class Performance}
+
+Table~\ref{tab:perclass} presents the per-class accuracies and error rates on the test set.
+
+\begin{table}[h]
+\centering
+\caption{Per-class classification performance on test set (125 samples per class).}
+\label{tab:perclass}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Tissue Type} & \textbf{Accuracy (\%)} & \textbf{Error Rate (\%)} \\
+\midrule
+TUMOR & 80.8 & 19.2 \\
+STROMA & 81.6 & 18.4 \\
+COMPLEX & 80.0 & 20.0 \\
+LYMPHO & 80.8 & 19.2 \\
+DEBRIS & 76.8 & 23.2 \\
+MUCOSA & 88.8 & 11.2 \\
+ADIPOSE & 94.4 & 5.6 \\
+EMPTY & 96.8 & 3.2 \\
+\midrule
+\textbf{Overall} & \textbf{85.0} & \textbf{15.0} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Observations}
+
+\begin{itemize}
+    \item \textbf{Strongest performance}: EMPTY (96.8\%), ADIPOSE (94.4\%), and MUCOSA (88.8\%) tissues are classified with high accuracy. These tissue types have distinctive textural patterns that are well-captured by scattering features.
+    
+    \item \textbf{Moderate performance}: TUMOR, STROMA, COMPLEX, and LYMPHO achieve $\sim$80\% accuracy. These tissue types exhibit greater intra-class variability and inter-class similarity.
+    
+    \item \textbf{Most challenging}: DEBRIS (76.8\%) is the most difficult class. This may be due to the heterogeneous and irregular nature of debris regions.
+\end{itemize}
+
+\subsection{Confusion Matrix Analysis}
+
+Figure~\ref{fig:confusion} shows the confusion matrix for the eight-class classification task.
+
+% Placeholder for confusion matrix figure
+\begin{figure}[h]
+\centering
+% \includegraphics[width=0.9\textwidth]{confusion_matrix.png}
+\fbox{\begin{minipage}{0.8\textwidth}
+\centering
+[Confusion Matrix Figure]\\
+8x8 heatmap showing predicted vs. true class labels\\
+Diagonal elements show correctly classified samples\\
+Off-diagonal elements show misclassifications
+\end{minipage}}
+\caption{Confusion matrix for eight-class tissue classification on test set. Rows represent true classes, columns represent predicted classes. Values indicate number of samples out of 125 per class.}
+\label{fig:confusion}
+\end{figure}
+
+\subsubsection{Common Misclassifications}
+
+Analysis of the confusion matrix reveals several patterns:
+
+\begin{enumerate}
+    \item \textbf{TUMOR $\leftrightarrow$ STROMA/COMPLEX}: The most frequent confusions occur between tumor epithelium and stromal tissues. This is clinically understandable as these tissue types are spatially adjacent and may have overlapping textural characteristics at patch boundaries.
+    
+    \item \textbf{DEBRIS misclassifications}: DEBRIS patches are sometimes confused with TUMOR (10 samples) or STROMA (8 samples), likely due to the irregular, heterogeneous appearance of necrotic material.
+    
+    \item \textbf{LYMPHO confusion}: Lymphocyte regions are occasionally misclassified as COMPLEX stroma (15 samples), which contains scattered single cells that may appear similar to lymphocytic infiltrates.
+    
+    \item \textbf{Clear distinctions}: EMPTY and ADIPOSE tissues are rarely confused with cellular tissue types, confirming that their distinctive low-complexity textures are robustly characterized by scattering features.
+\end{enumerate}
+
+\subsection{Feature Importance}
+
+To understand which scattering coefficients are most discriminative, we computed the variance explained by each feature across all classes. 
+
+\subsubsection{Zeroth-Order Coefficients}
+
+The zeroth-order coefficient $S^0f$ (corresponding to overall image intensity) has moderate discriminative power, capturing gross differences in staining density between tissue types.
+
+\subsubsection{First-Order Coefficients}
+
+First-order coefficients $S^1f(\lambda, \theta)$ capture the amplitude of frequency content at each scale and orientation:
+\begin{itemize}
+    \item \textbf{Scale importance}: Coefficients at fine scales ($\lambda = 2^0$) are most discriminative, capturing detailed cellular and nuclear structures.
+    \item \textbf{Orientation importance}: All orientations contribute, but diagonal orientations ($\theta = \pi/4, 3\pi/4$) show slightly higher variance, potentially reflecting the anisotropic organization of some tissue structures.
+\end{itemize}
+
+\subsubsection{Second-Order Coefficients}
+
+Second-order coefficients $S^2f(\lambda_1, \theta_1, \lambda_2, \theta_2)$ capture interference patterns and higher-order dependencies:
+\begin{itemize}
+    \item Cross-scale interactions (e.g., $\lambda_1 = 2^0, \lambda_2 = 2^2$) are particularly informative
+    \item These coefficients encode subtle textural regularities that distinguish tissue types with similar first-order statistics
+\end{itemize}
+
+\subsection{Comparison with Power Spectrum}
+
+To demonstrate the advantage of higher-order moment capture, we compared scattering features with power spectrum-based features (which capture only second-order statistics).
+
+For a subset of tissue patches, we:
+\begin{enumerate}
+    \item Computed the 2D power spectrum: $P(f) = |\mathcal{F}\{f\}|^2$
+    \item Generated Gaussian random field (GRF) realizations with identical power spectra
+    \item Computed scattering features for both original patches and GRF realizations
+\end{enumerate}
+
+\textbf{Result}: While original tumor tissue and matched GRF have identical power spectra, their scattering coefficients differ significantly (particularly second-order coefficients). This confirms that scattering features capture higher-order statistical structure beyond second-order moments, enabling discrimination of textures with identical power spectra.
+
+%
+%
+%
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Interpretation of Results}
+
+Our results demonstrate that wavelet scattering features provide an effective, mathematically principled approach to colorectal cancer tissue classification. The 85.0\% test accuracy is competitive with classical texture analysis methods and represents a strong baseline for this challenging eight-class problem.
+
+\subsubsection{Advantages of Scattering Features}
+
+\begin{enumerate}
+    \item \textbf{No training required}: Unlike deep learning approaches that require large annotated datasets and extensive training, scattering feature extraction requires no learning. This is particularly valuable in medical imaging, where labeled data is scarce and expensive to obtain.
+    
+    \item \textbf{Mathematical interpretability}: Each scattering coefficient has a clear interpretation in terms of multi-scale, multi-orientation frequency content and higher-order statistical moments. This transparency is crucial for medical applications where interpretability is essential.
+    
+    \item \textbf{Computational efficiency}: Feature extraction is fast (0.5 seconds per image) and requires only a single forward pass through the scattering network. No iterative optimization is needed.
+    
+    \item \textbf{Guaranteed properties}: The translation invariance and stability to deformations are mathematically guaranteed, not learned. This provides robustness to small variations in tissue appearance.
+    
+    \item \textbf{Higher-order statistics}: The ability to capture fourth-order moments through second-order scattering is crucial for discriminating complex tissue textures that cannot be distinguished by power spectrum or autocorrelation alone.
+\end{enumerate}
+
+\subsubsection{Structural Similarity to CNNs}
+
+The scattering transform shares architectural elements with convolutional neural networks:
+\begin{itemize}
+    \item \textbf{Convolution}: Both use convolution operations to extract local features
+    \item \textbf{Nonlinearity}: Modulus in scattering vs. ReLU/other activations in CNNs
+    \item \textbf{Pooling/averaging}: Both aggregate information over spatial regions
+    \item \textbf{Hierarchy}: Both build hierarchical representations through multiple layers
+\end{itemize}
+
+The key difference is that scattering uses predefined wavelet filters (based on mathematical principles) rather than learned filters. This design choice trades the flexibility of learned features for guaranteed mathematical properties and elimination of training requirements.
+
+\subsection{Analysis of Misclassifications}
+
+\subsubsection{Tumor-Stroma Confusion}
+
+The most frequent misclassifications occur between tumor epithelium and stromal tissue types (simple stroma and complex stroma). Several factors contribute to this:
+
+\begin{enumerate}
+    \item \textbf{Spatial proximity}: Tumor and stroma are often intimately admixed in cancer tissue. Patches taken at tumor-stroma interfaces may contain elements of both tissue types.
+    
+    \item \textbf{Stromal reaction}: Cancer-associated stroma (desmoplastic response) exhibits altered texture compared to normal stroma, potentially making it appear more similar to tumor.
+    
+    \item \textbf{Patch size}: The $150 \times 150$ pixel patch size ($\sim$74 $\mu$m) is comparable to the scale of tissue heterogeneity, leading to patches with mixed tissue types.
+\end{enumerate}
+
+\subsubsection{Debris Challenges}
+
+DEBRIS is the most difficult class (76.8\% accuracy). Necrotic and debris regions are highly heterogeneous by nature:
+\begin{itemize}
+    \item They contain fragmented cellular material with irregular, non-repeating patterns
+    \item They lack the organized structure present in intact tissue types
+    \item Their appearance varies widely depending on the degree and type of tissue degradation
+\end{itemize}
+
+The relatively poor performance on DEBRIS suggests that this class may be less well-defined as a texture category, or that additional features (e.g., color information beyond grayscale) might be beneficial.
+
+\subsection{Limitations}
+
+\subsubsection{Dataset Constraints}
+
+\begin{itemize}
+    \item \textbf{Single dataset}: We evaluated on a single publicly available dataset. Generalization to other institutions, scanners, and staining protocols remains to be validated.
+    
+    \item \textbf{Patch-based}: Classification is performed on small patches rather than whole slide images. Integration into a whole-slide analysis pipeline would require additional development.
+    
+    \item \textbf{Clean labels}: The dataset contains clean, expert-annotated patches representing pure tissue types. Real-world patches often contain mixtures of tissue types.
+\end{itemize}
+
+\subsubsection{Method Limitations}
+
+\begin{itemize}
+    \item \textbf{Grayscale processing}: We convert H\&E images to grayscale before computing scattering features. While this simplifies computation, it discards color information that may be diagnostic (e.g., eosinophilic vs. basophilic staining).
+    
+    \item \textbf{Fixed architecture}: The scattering network architecture (scales, orientations, layers) is fixed. While we optimized these choices via cross-validation, learned architectures (as in CNNs) might discover more task-specific representations.
+    
+    \item \textbf{Translation invariance}: Complete translation invariance may be disadvantageous for some tasks where spatial context is important (e.g., gland architecture).
+\end{itemize}
+
+\subsubsection{Comparison with Deep Learning}
+
+We did not include a direct comparison with deep CNN baselines (e.g., ResNet, VGG) for the following reasons:
+
+\begin{itemize}
+    \item The original dataset paper~\cite{Kather2016} reports CNN performance, providing indirect comparison
+    \item Our goal was to demonstrate feasibility of scattering features, not to claim state-of-the-art performance
+    \item Fair comparison would require extensive CNN architecture search and hyperparameter tuning
+\end{itemize}
+
+Future work should include rigorous comparison with modern deep learning approaches, including evaluation of trade-offs in accuracy, training data requirements, computational cost, and interpretability.
+
+\subsection{Clinical Relevance}
+
+\subsubsection{Potential Applications}
+
+\begin{enumerate}
+    \item \textbf{Computer-aided diagnosis}: Automated tissue classification could assist pathologists by pre-screening slides and highlighting regions of interest.
+    
+    \item \textbf{Quantitative biomarkers}: Proportions of different tissue types (e.g., tumor-stroma ratio, immune infiltration) have prognostic value. Automated classification enables quantification of these biomarkers.
+    
+    \item \textbf{Treatment response prediction}: Tissue composition heterogeneity may predict response to therapy. Scattering features could stratify patients for personalized treatment.
+    
+    \item \textbf{Quality control}: Automated identification of artifacts (debris, empty tissue) could improve digital pathology workflows.
+\end{enumerate}
+
+\subsubsection{Advantages for Clinical Translation}
+
+The interpretability and guaranteed stability properties of scattering transforms may facilitate regulatory approval and clinical adoption:
+\begin{itemize}
+    \item Explainable features are easier to validate clinically
+    \item Stability guarantees provide confidence in robustness to technical variations
+    \item No training required reduces barriers to deployment in new institutions
+\end{itemize}
+
+\subsection{Future Directions}
+
+\subsubsection{Methodological Extensions}
+
+\begin{enumerate}
+    \item \textbf{Color scattering}: Extend the framework to multi-channel (RGB) images to leverage color information in H\&E staining.
+    
+    \item \textbf{Hybrid approaches}: Combine scattering features with learned features (e.g., use scattering features as input to a small neural network).
+    
+    \item \textbf{Multi-scale analysis}: Incorporate features at multiple magnifications to capture both cellular and architectural information.
+    
+    \item \textbf{Roto-translation scattering}: Use more sophisticated scattering networks with joint rotation-translation invariance~\cite{Sifre2014}.
+    
+    \item \textbf{Optimized wavelets}: While Morlet wavelets are standard, task-specific wavelet design could improve performance.
+\end{enumerate}
+
+\subsubsection{Clinical Studies}
+
+\begin{enumerate}
+    \item \textbf{Multi-center validation}: Evaluate generalization across different institutions and scanning platforms.
+    
+    \item \textbf{Whole-slide classification}: Develop pipelines for analyzing entire histopathology slides, not just isolated patches.
+    
+    \item \textbf{Prognostic modeling}: Assess whether scattering-based tissue quantification predicts patient outcomes (survival, recurrence).
+    
+    \item \textbf{Other cancer types}: Apply the methodology to other cancer histopathology problems (breast, lung, prostate).
+\end{enumerate}
+
+\subsubsection{Comparative Studies}
+
+\begin{enumerate}
+    \item \textbf{Deep learning comparison}: Rigorous comparison with state-of-the-art CNNs, including analysis of accuracy vs. training data size trade-offs.
+    
+    \item \textbf{Classical features}: Comparison with hand-crafted features (LBP, GLCM, morphological features).
+    
+    \item \textbf{Hybrid models}: Investigate whether combining scattering features with other feature types improves performance.
+\end{enumerate}
+
+%
+%
+%
+\section{Conclusion}
+\label{sec:conclusion}
+
+We have presented the first application of the wavelet scattering transform to colorectal cancer histopathology classification. Our results demonstrate that scattering features—extracted through a mathematically principled, training-free process—achieve 85.0\% accuracy on an eight-class tissue classification task.
+
+The wavelet scattering transform offers a compelling alternative to deep learning for medical image analysis applications where:
+\begin{itemize}
+    \item Labeled training data is limited
+    \item Interpretability and explainability are essential
+    \item Computational efficiency is important
+    \item Guaranteed mathematical properties (translation invariance, stability) are valued
+\end{itemize}
+
+By capturing higher-order statistical moments through cascaded wavelet modulus operations, scattering features effectively characterize complex tissue textures beyond what is possible with classical second-order descriptors. The structural similarity to convolutional neural networks, combined with the elimination of training requirements, positions scattering transforms as a powerful tool for medical imaging tasks.
+
+Future work will extend this framework to multi-channel color images, validate generalization across multiple datasets, and compare performance with state-of-the-art deep learning approaches. We envision that scattering-based tissue quantification could contribute to computer-aided diagnosis, prognostic biomarker development, and personalized cancer treatment planning.
+
+%
+% ---- Bibliography ----
+%
+% BibTeX users should specify bibliography style 'splncs04'.
+% References will then be sorted and formatted in the correct style.
+%
+\bibliographystyle{splncs04}
+% \bibliography{references}
+
+\begin{thebibliography}{20}
+
+\bibitem{ref_crc_stats}
+Siegel, R.L., Miller, K.D., Jemal, A.: Cancer statistics, 2023. CA: A Cancer Journal for Clinicians \textbf{73}(1), 17--48 (2023)
+
+\bibitem{Mezheyeuski2016}
+Mezheyeuski, A., Hrynchyk, I., Karlberg, M., et al.: Image analysis-derived metrics of histomorphological complexity predicts prognosis and treatment response in stage II-III colon cancer. Scientific Reports \textbf{6}, 36149 (2016)
+
+\bibitem{Zhou2019}
+Zhou, R., Zhang, J., Zeng, D., et al.: Immune cell infiltration as a biomarker for the diagnosis and prognosis of stage I-III colon cancer. Cancer Immunology, Immunotherapy \textbf{68}, 433--442 (2019)
+
+\bibitem{Kather2016}
+Kather, J.N., Weis, C.-A., Bianconi, F., et al.: Multi-class texture analysis in colorectal cancer histology. Scientific Reports \textbf{6}, 27988 (2016)
+
+\bibitem{Lubner2015}
+Lubner, M.G., Stabo, N., Lubner, S.J., et al.: CT textural analysis of hepatic metastatic colorectal cancer: pre-treatment tumor heterogeneity correlates with pathology and clinical outcomes. Abdominal Imaging \textbf{40}, 2331--2337 (2015)
+
+\bibitem{Alic2014}
+Alic, L., Niessen, W.J., Veenland, J.F.: Quantification of heterogeneity as a biomarker in tumor imaging: A systematic review. PLoS ONE \textbf{9}, e110300 (2014)
+
+\bibitem{Jin2022}
+Jin, H.-Y., Yoo, S.-Y., Lee, J.-A., et al.: Combinatory statuses of tumor stromal percentage and tumor infiltrating lymphocytes as prognostic factors in stage III colorectal cancers. Journal of Gastroenterology and Hepatology \textbf{37}, 551--557 (2022)
+
+\bibitem{Kather2019}
+Kather, J.N., Pearson, A.T., Halama, N., et al.: Deep learning can predict microsatellite instability directly from histology in gastrointestinal cancer. Nature Medicine \textbf{25}, 1054--1056 (2019)
+
+\bibitem{Korbar2017}
+Korbar, B., Olofson, A.M., Miraflor, A.P., et al.: Deep learning for classification of colorectal polyps on whole-slide images. Journal of Pathology Informatics \textbf{8}, 30 (2017)
+
+\bibitem{Mallat2012}
+Mallat, S.: Group invariant scattering. Communications on Pure and Applied Mathematics \textbf{65}(10), 1331--1398 (2012)
+
+\bibitem{Bruna2013}
+Bruna, J., Mallat, S.: Invariant scattering convolution networks. IEEE Transactions on Pattern Analysis and Machine Intelligence \textbf{35}(8), 1872--1886 (2013)
+
+\bibitem{Sifre2014}
+Sifre, L., Mallat, S.: Rigid-motion scattering for image classification. PhD Thesis, Ecole Polytechnique (2014)
+
+\bibitem{Waldspurger2017}
+Waldspurger, I.: Exponential decay of scattering coefficients. In: 2017 International Conference on Sampling Theory and Applications (SampTA), pp. 143--146 (2017)
+
+\bibitem{Macenko2009}
+Macenko, M., Niethammer, M., Marron, J.S., et al.: A method for normalizing histology slides for quantitative analysis. In: 2009 IEEE International Symposium on Biomedical Imaging, pp. 1107--1110 (2009)
+
+\bibitem{Anden2011}
+Andén, J., Mallat, S.: Multiscale scattering for audio classification. In: 12th International Society for Music Information Retrieval Conference (ISMIR 2011), pp. 657--662 (2011)
+
+\end{thebibliography}
+
+\end{document}

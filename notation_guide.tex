@@ -1,0 +1,180 @@
+% ============================================================================
+% NOTATION GUIDE FOR WAVELET SCATTERING PAPER
+% IEEE AIPR 2025 - Colon Cancer Tissue Classification
+% ============================================================================
+% Author: Ritish Raghav Maram
+% Date: November 2025
+% ============================================================================
+
+\documentclass{article}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+
+\begin{document}
+
+\section*{Notation Guide - Wavelet Scattering for Tissue Classification}
+
+\subsection*{1. Basic Image and Signal Notation}
+
+\begin{itemize}
+    \item $f(x,y)$ or $f(\mathbf{x})$ : Input image, where $\mathbf{x} = (x,y) \in \mathbb{R}^2$
+    \item $\|\cdot\|$ : $L^2$ norm, $\|f\| = \left(\int |f(\mathbf{x})|^2 d\mathbf{x}\right)^{1/2}$
+    \item $*$ : Convolution operator, $(f * g)(\mathbf{x}) = \int f(\mathbf{u}) g(\mathbf{x} - \mathbf{u}) d\mathbf{u}$
+\end{itemize}
+
+\subsection*{2. Wavelet Transform Components}
+
+\begin{itemize}
+    \item $\phi(\mathbf{x})$ : Scaling function (low-pass filter)
+    \item $\psi(\mathbf{x})$ : Mother wavelet (band-pass filter)
+    \item $\psi_{\lambda,\theta}(\mathbf{x})$ : Wavelet at scale $\lambda$ and orientation $\theta$
+    \item $\lambda \in 2^{\mathbb{Z}}$ : Scale parameter (dyadic scales: $\lambda = 2^j, j \in \mathbb{Z}$)
+    \item $\theta \in [0, \pi)$ : Orientation parameter
+    \item $J$ : Number of scales
+    \item $L$ : Number of orientations per scale
+\end{itemize}
+
+\subsection*{3. Morlet Wavelet Family}
+
+The complex Morlet (Gabor) wavelet:
+\begin{equation}
+    \psi(\mathbf{x}) = e^{i\boldsymbol{\xi} \cdot \mathbf{x}} \eta(\mathbf{x})
+\end{equation}
+where $\eta(\mathbf{x})$ is a Gaussian window and $\boldsymbol{\xi}$ is the central frequency.
+
+Scaled and rotated version:
+\begin{equation}
+    \psi_{\lambda,\theta}(\mathbf{x}) = \lambda^{-2} \psi\left(\lambda^{-1} R_{\theta}^{-1} \mathbf{x}\right)
+\end{equation}
+where $R_{\theta}$ is the rotation matrix by angle $\theta$.
+
+\subsection*{4. Wavelet Transform Operations}
+
+\begin{itemize}
+    \item $Wf(\lambda, \theta)$ : 2D continuous wavelet transform
+    \begin{equation}
+        Wf(\lambda, \theta) = \{f * \phi, (f * \psi_{\lambda,\theta})_{\lambda,\theta}\}
+    \end{equation}
+    
+    \item $|Wf|(\lambda, \theta)$ : Wavelet modulus transform
+    \begin{equation}
+        |Wf|(\lambda, \theta) = \{f * \phi, (|f * \psi_{\lambda,\theta}|)_{\lambda,\theta}\}
+    \end{equation}
+\end{itemize}
+
+\subsection*{5. Scattering Transform Notation}
+
+\subsubsection*{Path Notation}
+\begin{itemize}
+    \item $p = (\lambda_1, \theta_1, \lambda_2, \theta_2, \ldots, \lambda_m, \theta_m)$ : Frequency path
+    \item $m$ : Path length (order of scattering)
+    \item $U[\lambda,\theta]$ : Wavelet modulus operator, $U[\lambda,\theta]f = |f * \psi_{\lambda,\theta}|$
+\end{itemize}
+
+\subsubsection*{Scattering Coefficients by Order}
+
+\textbf{Zeroth-order} (low-pass filtered):
+\begin{equation}
+    S^0f = f * \phi
+\end{equation}
+
+\textbf{First-order} (single wavelet convolution):
+\begin{equation}
+    S^1f(\lambda_1, \theta_1) = |f * \psi_{\lambda_1,\theta_1}| * \phi
+\end{equation}
+
+\textbf{Second-order} (cascade of two wavelet convolutions):
+\begin{equation}
+    S^2f(\lambda_1, \theta_1, \lambda_2, \theta_2) = \big||f * \psi_{\lambda_1,\theta_1}| * \psi_{\lambda_2,\theta_2}\big| * \phi
+\end{equation}
+
+\textbf{$m$-th order} (cascade of $m$ wavelet convolutions):
+\begin{equation}
+    S^mf(p) = \big|\cdots \big||f * \psi_{\lambda_1,\theta_1}| * \psi_{\lambda_2,\theta_2}\big| \cdots * \psi_{\lambda_m,\theta_m}\big| * \phi
+\end{equation}
+
+\subsubsection*{Complete Scattering Transform}
+
+\begin{equation}
+    Sf = \begin{cases}
+        S^0f \\
+        S^1f(\lambda_1, \theta_1) \\
+        S^2f(\lambda_1, \theta_1, \lambda_2, \theta_2) \\
+        \vdots \\
+        S^mf(p)
+    \end{cases}
+\end{equation}
+
+\subsection*{6. Machine Learning Notation}
+
+\begin{itemize}
+    \item $\mathcal{D} = \{(f_i, y_i)\}_{i=1}^N$ : Dataset with $N$ samples
+    \item $f_i$ : $i$-th image
+    \item $y_i \in \{1, 2, \ldots, C\}$ : Class label for $i$-th image
+    \item $C$ : Number of classes (8 tissue types)
+    \item $\mathbf{s}_i = Sf_i$ : Scattering feature vector for image $f_i$
+    \item $d$ : Dimension of feature vector (61 in our implementation)
+    \item $\mathbf{X} \in \mathbb{R}^{N \times d}$ : Feature matrix
+    \item $\mathbf{y} \in \{1,\ldots,C\}^N$ : Label vector
+\end{itemize}
+
+\subsection*{7. SVM Classification}
+
+\begin{itemize}
+    \item $K(\mathbf{s}_i, \mathbf{s}_j)$ : Kernel function
+    \item For cubic polynomial kernel: $K(\mathbf{s}_i, \mathbf{s}_j) = (\mathbf{s}_i^T \mathbf{s}_j + c)^3$
+    \item $\alpha_i$ : Lagrange multipliers
+    \item $\hat{y}$ : Predicted class label
+\end{itemize}
+
+\subsection*{8. Dataset Notation}
+
+\begin{itemize}
+    \item $N_{\text{train}} = 4000$ : Number of training images
+    \item $N_{\text{test}} = 1000$ : Number of test images
+    \item $N_c = 500$ : Number of training images per class
+    \item Image size: $150 \times 150$ pixels
+    \item Tissue types: \{TUMOR, STROMA, COMPLEX, LYMPHO, DEBRIS, MUCOSA, ADIPOSE, EMPTY\}
+\end{itemize}
+
+\subsection*{9. Performance Metrics}
+
+\begin{itemize}
+    \item Accuracy: $\text{Acc} = \frac{1}{N_{\text{test}}} \sum_{i=1}^{N_{\text{test}}} \mathbb{I}(\hat{y}_i = y_i)$
+    \item Per-class accuracy: $\text{Acc}_c = \frac{\text{TP}_c}{N_c}$
+    \item Confusion matrix: $\mathbf{C} \in \mathbb{R}^{C \times C}$, where $C_{ij}$ is the number of samples from class $i$ classified as class $j$
+\end{itemize}
+
+\subsection*{10. Key Mathematical Properties}
+
+\begin{itemize}
+    \item \textbf{Translation invariance}: $S(f(\mathbf{x} - \mathbf{c})) = S(f(\mathbf{x}))$ for large support of $\phi$
+    \item \textbf{Energy preservation}: $\|f\|^2 = \sum_{p} \|S^mf(p)\|^2$
+    \item \textbf{Lipschitz continuity}: $\|Sf_1 - Sf_2\| \leq C\|f_1 - f_2\|$ for deformations
+    \item \textbf{Stability to deformations}: Provably stable to diffeomorphisms
+\end{itemize}
+
+\subsection*{Quick Reference Table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+$f$ & Input image \\
+$\phi$ & Scaling function (low-pass) \\
+$\psi_{\lambda,\theta}$ & Wavelet at scale $\lambda$, orientation $\theta$ \\
+$S^0f$ & Zeroth-order scattering \\
+$S^1f$ & First-order scattering \\
+$S^2f$ & Second-order scattering \\
+$J$ & Number of scales (3 in our work) \\
+$L$ & Number of orientations (4 in our work) \\
+$m$ & Scattering order/path length \\
+$d$ & Feature dimension (61) \\
+$C$ & Number of classes (8) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}
