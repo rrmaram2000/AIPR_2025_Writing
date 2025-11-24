@@ -89,6 +89,10 @@ pdflatex aipr_2025_main.tex  # Third pass for final formatting
 3. Click "Recompile" to generate PDF
 4. Link to GitHub for version control
 
+## Acknowledgements
+
+I would like to acknowledge the guidance and support of my advisors, Dr. Murray Loew and Dr. Elliot Levy, whose insights and encouragement were invaluable in completing this work.
+
 ## Important References
 
 - Kather, J.N., et al.: Multi-class texture analysis in colorectal cancer histology. Sci. Rep. **6**, 27988 (2016)
