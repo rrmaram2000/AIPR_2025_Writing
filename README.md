@@ -84,14 +84,16 @@ pdflatex aipr_2025_main.tex  # Third pass for final formatting
 ```
 
 ### Using Overleaf (Recommended)
-1. Upload `aipr_2025_main.tex` to Overleaf
-2. Overleaf includes `llncs.cls` automatically
-3. Click "Recompile" to generate PDF
-4. Link to GitHub for version control
+
+1. Create a new project in Overleaf and upload `aipr_2025_main.tex`
+2. Upload `llncs.cls` to the Overleaf project
+3. Upload the `Images` folder to the Overleaf project 
+4. Click "Recompile" to generate PDF
+
 
 ## Acknowledgements
 
-I would like to acknowledge the guidance and support of my advisors, Dr. Murray Loew and Dr. Elliot Levy, whose insights and encouragement were invaluable in completing this work.
+I would like to thank my advisors, Prof. Murray Loew (The George Washington University) and Dr. Elliot Levy (NIH Clinical Center), whose guidance and encouragement have been instrumental throughout the development of this work. 
 
 ## Important References
 
@@ -99,8 +101,3 @@ I would like to acknowledge the guidance and support of my advisors, Dr. Murray 
 - Mallat, S.: Group Invariant Scattering. Commun. Pure Appl. Math. **65**(10), 1331-1398 (2012)
 - Bruna, J., Mallat, S.: Invariant Scattering Convolution Networks. IEEE Trans. Pattern Anal. Mach. Intell. **35**, 1872-1886 (2013)
 
-## Contact
-
-- Ritish Raghav Maram: rmaram33@gwu.edu
-- Murray Loew: loew@gwu.edu
-- Elliot Levy: levyeb@nih.gov
