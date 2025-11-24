@@ -7,7 +7,8 @@
 \usepackage{graphicx}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
-
+\usepackage{hyperref}
+\usepackage{fontawesome5}
 \begin{document}
 %
 \title{Wavelet Scattering Features based Colon Cancer Histology Classification}
@@ -274,13 +275,29 @@ The structural similarities between scattering networks and convolutional neural
 
 However, scattering networks employ predefined Morlet wavelets rather than learned filters, eliminating the need for  training in the feature extraction process while providing mathematical guarantees of translation invariance and Lipschitz continuity to deformations~\cite{mallat2012group,bruna2013invariant}.  For our colorectal tissue classification task, second-order scattering coefficients ($m=2$) capture scale interactions and 4th-order moments that effectively discriminate the complex textural patterns characteristic of different tissue types. As previously noted, this approach is computationally very efficient as extracting features for the entire test set took just 2.42 minutes, while training the multi-class SVM was completed in only 23.82 seconds.
 
-A few limitations should be acknowledged. The wavelets are predefined rather than learned from data, potentially limiting adaptability to dataset-specific characteristics. Validation on additional multi-center datasets is needed to assess generalization beyond the single dataset used here. Finally, the patch-based analysis does not consider whole-slide spatial context or relationships between neighboring tissue regions.
+A few limitations should be acknowledged. The wavelets are predefined rather than learned from data, potentially limiting adaptability to dataset-specific characteristics. Our future objective is to tackle this limitation by developing wavelets learned directly from image data to effectively capture the structures present in the histology tissue types and improve the classification accuracy. Validation on additional multi-center datasets is needed to assess generalization beyond the single dataset used here. Finally, the patch-based analysis does not consider whole-slide spatial context or relationships between neighboring tissue regions.
 
 
 %
 \section{Acknowledgments}
 
 No funding was received for conducting this study. The authors have no relevant financial or non-financial interests to disclose. The research was supported by an intramural NIH grant 889286 Clinical Center's Research Award for Staff Clinicians (E.L.).
+
+
+
+
+\subsection*{Availability of Code and Materials}
+All code and materials supporting this work are publicly available on GitHub to facilitate reproducibility:
+
+\vspace{0.1cm}
+\noindent
+\faGithub~\textbf{Analysis Code:} \href{https://github.com/rrmaram2000/AIPR_Codes}{\texttt{rrmaram2000/AIPR\_Codes}}\\
+\textit{MATLAB codes for reproducing results and figures}
+
+\vspace{0.1cm}
+\noindent
+\faGithub~\textbf{Manuscript Source:} \href{https://github.com/rrmaram2000/AIPR_2025_Writing}{\texttt{rrmaram2000/AIPR\_2025\_Writing}}\\
+\textit{LaTeX source files, figures, and supplementary materials}
 
 %
 \bibliographystyle{splncs04}
