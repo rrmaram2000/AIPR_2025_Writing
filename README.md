@@ -8,7 +8,7 @@
 
 ## Abstract
 
-This paper presents a novel application of wavelet scattering transforms to colorectal cancer histopathology tissue classification. We apply a mathematically principled, training-free feature extraction method to classify eight tissue types commonly found in colorectal cancer histology images. Using a two-layer scattering network with Morlet wavelets, we extract 49 scattering coefficients from each 150×150 pixel H&E stained tissue image. These features are used to train a Support Vector Machine (SVM) classifier, achieving **85.10% accuracy** on test data with precision (85.19%), recall (85.10%), and F1-score (85.08%). The method demonstrates particular strength in classifying tumor epithelium (88.8% accuracy) and adipose tissue (96.8% accuracy), which are clinically important for cancer detection.
+This paper presents an application of wavelet scattering transforms to colorectal cancer histopathology tissue classification. We apply a mathematically principled, training-free feature extraction method to classify eight tissue types commonly found in colorectal cancer histology images. Using a two-layer scattering network with Morlet wavelets, we extract 49 scattering coefficients from each 150×150 pixel H&E stained tissue image. These features are used to train a Support Vector Machine (SVM) classifier, achieving **85.10% accuracy** on test data with precision (85.19%), recall (85.10%), and F1-score (85.08%). The method demonstrates particular strength in classifying tumor epithelium (88.8% accuracy), a clinically essential task for cancer detection.
 
 ## Key Points
 
