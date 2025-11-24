@@ -1,7 +1,7 @@
 # Wavelet Scattering Features based Colon Cancer Histology Classification
 
 **Authors:** Ritish Raghav Maram, Elliot Levy, Murray Loew  
-**Affiliation:** The George Washington University & National Institutes of Health  
+**Affiliation:** The George Washington University & National Institutes of Health, Clinical Center
 **Conference:** IEEE AIPR 2025 (LNCS Format)
 
 ---
@@ -10,13 +10,12 @@
 
 This paper presents a novel application of wavelet scattering transforms to colorectal cancer histopathology tissue classification. We apply a mathematically principled, training-free feature extraction method to classify eight tissue types commonly found in colorectal cancer histology images. Using a two-layer scattering network with Morlet wavelets, we extract 49 scattering coefficients from each 150×150 pixel H&E stained tissue image. These features are used to train a Support Vector Machine (SVM) classifier, achieving **85.10% accuracy** on test data with precision (85.19%), recall (85.10%), and F1-score (85.08%). The method demonstrates particular strength in classifying tumor epithelium (88.8% accuracy) and adipose tissue (96.8% accuracy), which are clinically important for cancer detection.
 
-## Key Contributions
+## Key Points
 
 - **First application** of wavelet scattering transforms to histopathology tissue classification
 - Training-free feature extraction that requires no iterative optimization
 - Competitive performance (85.10% accuracy) on eight-class colorectal cancer tissue classification
 - Computationally efficient: 2.42 minutes for feature extraction, 23.82 seconds for training
-- Mathematical guarantees of translation invariance and stability to deformations
 
 ## Dataset
 
@@ -90,7 +89,7 @@ pdflatex aipr_2025_main.tex  # Third pass for final formatting
 3. Click "Recompile" to generate PDF
 4. Link to GitHub for version control
 
-## References
+## Important References
 
 - Kather, J.N., et al.: Multi-class texture analysis in colorectal cancer histology. Sci. Rep. **6**, 27988 (2016)
 - Mallat, S.: Group Invariant Scattering. Commun. Pure Appl. Math. **65**(10), 1331-1398 (2012)
@@ -98,6 +97,6 @@ pdflatex aipr_2025_main.tex  # Third pass for final formatting
 
 ## Contact
 
-- Ritish Raghav Maram: ritish@gwu.edu
+- Ritish Raghav Maram: rmaram33@gwu.edu
 - Murray Loew: loew@gwu.edu
-- Elliot Levy: elliot.levy@nih.gov
+- Elliot Levy: levyeb@nih.gov
