@@ -1,8 +1,8 @@
 # Wavelet Scattering Features based Colon Cancer Histology Classification
 
 **Authors:** Ritish Raghav Maram, Elliot Levy, Murray Loew  
-**Affiliation:** The George Washington University & National Institutes of Health, Clinical Center
-**Conference:** IEEE AIPR 2025 (LNCS Format)
+
+**Conference:** IEEE AIPR 2025
 
 ---
 
