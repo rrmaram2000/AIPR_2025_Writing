@@ -62,7 +62,7 @@ The study uses the publicly available Kather et al. colorectal cancer (CRC) hist
 | Complex Stroma | 70.4% |
 
 ### Computational Efficiency
-- Feature extraction: 2.42 minutes (all test images)
+- Feature extraction: 2.42 minutes (all train and test images)
 - Training: 23.82 seconds
 - Prediction: 0.04 seconds
 
