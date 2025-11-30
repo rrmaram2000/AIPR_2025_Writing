@@ -176,8 +176,8 @@ The work by Bruna and Mallat~\cite{bruna2013invariant} demonstrated that scatter
 
 \begin{figure}[h!]
 \centering
-\includegraphics[width=\textwidth]{Images/Tumor_GRF_41.png}
-\caption{Top row: A grayscale tumor tissue patch, its power spectrum, and scattering coefficients. Bottom row: Realization of a Gaussian Random Field (GRF), its power spectrum, and scattering coefficients. Power spectra are identical but scattering coefficients differ.}
+\includegraphics[width=\textwidth]{ScatteringDisks_Comparison.eps}
+\caption{Scattering coefficients of a tumor tissue patch versus a realization of Gaussian random field. Top row: Original H\&E image of tumor (a), its power spectrum (b), first-order (c) and second-order (d) scattering coefficients. Bottom row: a realization of Gaussian random field with power spectrum (e-f) and its scattering coefficients (g-h). Identical power spectra (b, f) but different scattering coefficients.}
 \label{fig:spectrum}
 \end{figure}
 
@@ -190,8 +190,8 @@ A two-layer scattering network is created because the energy within scattering c
 
 \begin{figure}[h!]
     \begin{center}
-    \includegraphics[width=1.0\textwidth]{Images/scat_tree.pdf}
-    \caption{Two-layer scattering tree. Orange nodes: scattering coefficients; white nodes: intermediate wavelet coefficients.}
+    \includegraphics[width=1.0\textwidth]{Images/scat_tree_dark_green.pdf}
+    \caption{Two-layer scattering tree. Green nodes: scattering coefficients; white nodes: intermediate wavelet modulus coefficients.}
     \label{fig:network}
     \end{center}
 \end{figure}
@@ -201,10 +201,11 @@ A two-layer scattering network is created because the energy within scattering c
 
 The scaling function $\phi$ has a spatial support of 20 pixels, providing translation invariance and serving as the lowpass filter for spatial averaging. The wavelet filter bank uses two dyadic scales in each layer, capturing features at fine and coarse resolutions, with six orientations uniformly sampled in $[0,\pi)$ at angles $\theta_\ell = \ell\pi/6$ for $\ell = 0,1,2,3,4,5$. Each filter bank thus contains $N_1 = N_2 = 12$ filters, organized as 2 scales $\times$ 6 orientations. These parameters were chosen heuristically through experimentation. Morlet spatial filters that are used in the first filter bank are shown in Figure~\ref{fig:morlet_fb}. 
 
-\begin{figure}[h!]
+\begin{figure}[htb!]
 \centering
+
+\includegraphics[width=\textwidth]{Images/wavelets_J2_angles6.pdf}
 \caption{Morlet Spatial Filters in the first filter bank for each combination of $\lambda_1$ and $\theta_1$}
-\includegraphics[width=\textwidth]{Images/wavelets_J2_angles6.png}
 \label{fig:morlet_fb}
 \end{figure}
 
@@ -273,7 +274,7 @@ The structural similarities between scattering networks and convolutional neural
 \label{fig:comparison}
 \end{figure}
 
-However, scattering networks employ predefined Morlet wavelets rather than learned filters, eliminating the need for  training in the feature extraction process while providing mathematical guarantees of translation invariance and Lipschitz continuity to deformations~\cite{mallat2012group,bruna2013invariant}.  For our colorectal tissue classification task, second-order scattering coefficients ($m=2$) capture scale interactions and 4th-order moments that effectively discriminate the complex textural patterns characteristic of different tissue types. As previously noted, this approach is computationally very efficient as extracting features for the entire test set took just 2.42 minutes, while training the multi-class SVM was completed in only 23.82 seconds.
+However, scattering networks employ predefined Morlet wavelets rather than learned filters, eliminating the need for  training in the feature extraction process while providing mathematical guarantees of translation invariance and Lipschitz continuity to deformations~\cite{mallat2012group,bruna2013invariant}.  For our colorectal tissue classification task, second-order scattering coefficients ($m=2$) capture scale interactions and 4th-order moments that effectively discriminate the complex textural patterns characteristic of different tissue types. As previously noted, this approach is computationally very efficient as extracting features for the entire training and test set took just 2.42 minutes, while training the multi-class SVM was completed in only 23.82 seconds.
 
 A few limitations should be acknowledged. The wavelets are predefined rather than learned from data, potentially limiting adaptability to dataset-specific characteristics. Our future objective is to tackle this limitation by developing wavelets learned directly from image data to effectively capture the structures present in the histology tissue types and improve the classification accuracy. Validation on additional multi-center datasets is needed to assess generalization beyond the single dataset used here. Finally, the patch-based analysis does not consider whole-slide spatial context or relationships between neighboring tissue regions.
 
