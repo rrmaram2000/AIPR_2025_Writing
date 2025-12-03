@@ -2,7 +2,7 @@
 
 **Authors:** Ritish Raghav Maram, Elliot Levy, Murray Loew  
 
-**Conference:** IEEE AIPR 2025
+**Conference:** AIPR 2025
 
 ---
 
