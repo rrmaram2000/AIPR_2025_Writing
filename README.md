@@ -74,22 +74,6 @@ The study uses the publicly available Kather et al. colorectal cancer (CRC) hist
 - **Images/** - Directory containing figures
 - **llncs.cls** - Springer LNCS document class
 
-## How to Compile
-
-### Using pdfLaTeX (Local)
-```bash
-pdflatex aipr_2025_main.tex
-pdflatex aipr_2025_main.tex  # Second pass for references
-pdflatex aipr_2025_main.tex  # Third pass for final formatting
-```
-
-### Using Overleaf (Recommended)
-
-1. Create a new project in Overleaf and upload `aipr_2025_main.tex`
-2. Upload `llncs.cls` to the Overleaf project
-3. Upload the `Images` folder to the Overleaf project 
-4. Click "Recompile" to generate PDF
-
 
 ## Acknowledgements
 
